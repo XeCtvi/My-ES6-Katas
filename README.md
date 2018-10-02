@@ -1,5 +1,5 @@
-# ES6 KatasLearn
+# ES6 Katas
 
-ES6 by doing it. Fix failing tests. Keep all learnings.
+Learn ES6 by doing it. Fix failing tests. Keep all learnings.
 
 Recording my codes.
