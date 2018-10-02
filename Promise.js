@@ -349,3 +349,153 @@ describe('chaining multiple promises can enhance readability', () => {
 
 });
 
+// 78: Promise - API overview
+// To do: make all tests pass, leave the assert lines unchanged!
+
+describe('`Promise` API overview', function() {
+
+  it('`new Promise()` requires a function as param', () => {
+    const param = () => {};
+    assert.doesNotThrow(() => { new Promise(param); });
+  });
+
+  describe('resolving a promise', () => {
+    // reminder: the test passes when a fulfilled promise is returned
+    it('via constructor parameter `new Promise((resolve) => { resolve(); })`', () => {
+      const param = (resolve) => { resolve(); };
+      return new Promise(param);
+    });
+    it('using `Promise.resolve()`', () => {
+      return Promise.resolve('all fine');
+    });
+  });
+
+  describe('a rejected promise', () => {
+    it('using the constructor parameter', (done) => {
+      const promise = Promise.reject();
+      promise
+        .then(() => done(new Error('The promise is expected to be rejected.')))
+        .catch(() => done());
+    });
+    it('via `Promise.reject()`', (done) => {
+      const promise = Promise.reject();
+      promise
+        .then(() => done(new Error('The promise is expected to be rejected.')))
+        .catch(() => done());
+    });
+  });
+
+  const resolvingPromise = Promise.resolve();
+  const rejectingPromise = Promise.reject();
+
+  describe('`Promise.all()`', () => {
+    it('`Promise.all([p1, p2])` resolves when all promises resolve', () =>
+      Promise.all([resolvingPromise, resolvingPromise, resolvingPromise])
+    );
+    it('`Promise.all([p1, p2])` rejects when a promise is rejected', (done) => {
+      Promise.all([resolvingPromise, rejectingPromise])
+        .then(() => done(new Error('The promise is expected to be rejected.')))
+        .catch(() => done())
+    });
+  });
+
+  describe('`Promise.race()`', () => {
+    it('`Promise.race([p1, p2])` resolves when one of the promises resolves', () =>
+      Promise.race([resolvingPromise, rejectingPromise])
+    );
+    it('`Promise.race([p1, p2])` rejects when one of the promises rejects', (done) => {
+      Promise.race([rejectingPromise, resolvingPromise])
+        .then(() => done(new Error('The promise is expected to be rejected.')))
+        .catch(() => done())
+    });
+    it('`Promise.race([p1, p2])` order matters (and timing)', () =>
+      Promise.race([resolvingPromise, resolvingPromise])
+    );
+  });
+
+});
+
+// 79: Promise - catch
+// To do: make all tests pass, leave the assert lines unchanged!
+// Here we use promises to trigger, don't modify the block with the 
+// returning promise!
+
+describe('`catch()` returns a Promise and deals with rejected cases only', () => {
+
+  describe('prerequisites for understanding', () => {
+
+    it('*return* a fulfilled promise, to pass a test', () => {
+      return Promise.resolve();
+      assert(false); // Don't touch! Make the test pass in the line above!
+    });
+
+    it('reminder: the test passes when a fulfilled promise is returned', () => {
+      return Promise.resolve('I should fulfill.');
+    });
+
+  });
+
+  describe('`catch` method basics', () => {
+    it('is an instance method', () => {
+      const p = Promise.reject();
+      assert.equal(typeof p.catch, 'function');
+    });
+
+    it('catches only promise rejections', (done) => {
+      const promise = Promise.reject();
+      promise
+        .then(() => { done('Should not be called!'); })
+        .catch(done);
+    });
+
+    it('returns a new promise', () => {
+      const whatToReturn = () => Promise.reject();
+      const promise = Promise.resolve();
+      return promise.catch(() =>
+        whatToReturn()
+      );
+    });
+
+    it('converts it`s return value into a promise', () => {
+      const p = Promise.reject();
+      const p1 = p.catch(() => "promise?");
+
+      return p1.then(result => assert.equal('promise?', result));
+    });
+
+    it('the first parameter is the rejection reason', () => {
+      const p = Promise.reject('oops');
+
+      return p.catch(reason => {
+        assert.equal(reason, 'oops');
+      });
+    });
+  });
+
+  describe('multiple `catch`es', () => {
+    it('only the first `catch` is called', () => {
+      const p = Promise.reject('1');
+      const p1 = p
+          .catch(reason => `${reason} AND 2`)
+        ;
+
+      return p1.then(result =>
+        assert.equal(result, '1 AND 2')
+      );
+    });
+
+    it('if a `catch` throws, the next `catch` catches it', () => {
+      const p = Promise.reject('1');
+      const p1 = p
+          .catch(reason => { throw Error(`${reason} AND 2`) })
+          .catch(err => { throw Error(`${err.message} AND 3`) })
+          .catch(err => `${err}`.replace("Error: ", ""))
+        ;
+
+      return p1.then(result =>
+        assert.equal(result, '1 AND 2 AND 3')
+      );
+    });
+  });
+
+});
